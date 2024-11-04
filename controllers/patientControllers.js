@@ -1,5 +1,5 @@
 const JWT = require("jsonwebtoken");
-const doctorModel = require("../models/doctor");
+const patientModel = require("../models/patient");
 const { hashPassword, comparePassword } = require("../utils/auth");
 var { expressjwt: jwt } = require("express-jwt");
 
@@ -35,8 +35,8 @@ module.exports.signUp = async (req, res) => {
     }
 
     // existing user
-    const existingDoctor = await doctorModel.findOne({ email: email });
-    if (existingDoctor) {
+    const patient = await patientModel.findOne({ email: email });
+    if (patient) {
       return res.status(400).send({
         success: false,
         message: "User already registered with this email",
@@ -47,7 +47,7 @@ module.exports.signUp = async (req, res) => {
     const hashedPassowrd = await hashPassword(password);
 
     // save user
-    const newDoctor = await doctorModel({
+    const newPatient = await patientModel({
       name,
       email,
       password: hashedPassowrd,
@@ -62,7 +62,7 @@ module.exports.signUp = async (req, res) => {
 
     return res.status(500).send({
       success: false,
-      message: "Error in Doctor SignUp API",
+      message: "Error in Patient SignUp API",
       error: error,
     });
   }
@@ -87,14 +87,14 @@ module.exports.logIn = async (req, res) => {
     }
 
     // existing user
-    const doctor = await doctorModel.findOne({ email: email });
-    if (doctor) {
-      const isSamePassword = await comparePassword(password, doctor.password);
+    const patient = await patientModel.findOne({ email: email });
+    if (patient) {
+      const isSamePassword = await comparePassword(password, patient.password);
       if (isSamePassword) {
-        doctor.password = undefined;
+        patient.password = undefined;
         //TOKEN JWT
         const token = await JWT.sign(
-          { _id: doctor._id },
+          { _id: patient._id },
           process.env.JWT_SECRET,
           {
             expiresIn: "7d",
@@ -104,7 +104,7 @@ module.exports.logIn = async (req, res) => {
           success: true,
           message: "Login success",
           token,
-          user: doctor,
+          user: patient,
         });
       } else {
         return res.status(400).send({
@@ -115,7 +115,7 @@ module.exports.logIn = async (req, res) => {
     } else {
       return res.status(400).send({
         success: false,
-        message: "No registered doctor found with given email",
+        message: "No registered patient found with given email",
       });
     }
   } catch (error) {
@@ -123,7 +123,7 @@ module.exports.logIn = async (req, res) => {
 
     return res.status(500).send({
       success: false,
-      message: "Error in Doctor LogIn API",
+      message: "Error in patient LogIn API",
       error: error,
     });
   }

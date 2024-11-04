@@ -29,6 +29,8 @@ app.get("", (req, res) => {
 });
 
 app.use("/doctor", require("./routes/doctorRoutes"));
+app.use("/caretaker", require("./routes/caretakerRoutes"));
+app.use("/patient", require("./routes/patientRoutes"));
 
 // PORT
 const PORT = process.env.PORT || 8080;
