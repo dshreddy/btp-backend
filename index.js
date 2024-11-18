@@ -3,6 +3,7 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 const colors = require("colors");
 const morgan = require("morgan");
+const bodyParser = require("body-parser");
 const connectDB = require("./config/db");
 
 // DOTENV
@@ -15,6 +16,17 @@ connectDB();
 const app = express();
 
 // middlewares
+app.use(
+  bodyParser.json({
+    limit: "10mb", // Increase the limit to 10MB or a size appropriate for your use case
+  })
+);
+app.use(
+  bodyParser.urlencoded({
+    limit: "10mb", // Increase the limit for URL-encoded data
+    extended: true,
+  })
+);
 app.use(cors());
 app.use(express.json());
 app.use(morgan("dev"));
