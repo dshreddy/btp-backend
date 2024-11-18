@@ -128,3 +128,63 @@ module.exports.logIn = async (req, res) => {
     });
   }
 };
+
+module.exports.update = async (req, res) => {
+  try {
+    const { email, name, password } = req.body;
+
+    // Validate email
+    if (!email) {
+      return res.status(400).send({
+        success: false,
+        message: "Email is required",
+      });
+    }
+
+    // Find the doctor by email
+    const doctor = await doctorModel.findOne({ email });
+    if (!doctor) {
+      return res.status(404).send({
+        success: false,
+        message: "Doctor not found",
+      });
+    }
+
+    console.log(doctor.__id);
+
+    // Update name if provided
+    if (name) {
+      doctor.name = name;
+    }
+
+    // Update password if provided
+    if (password) {
+      if (password.length < 6) {
+        return res.status(400).send({
+          success: false,
+          message: "Password must be at least 6 characters long",
+        });
+      }
+      doctor.password = await hashPassword(password);
+    }
+
+    // Save updated doctor details
+    await doctor.save();
+
+    // Remove password from response
+    doctor.password = undefined;
+
+    return res.status(200).send({
+      success: true,
+      message: "Details updated successfully",
+      user: doctor,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({
+      success: false,
+      message: "Error updating doctor details",
+      error: error.message,
+    });
+  }
+};

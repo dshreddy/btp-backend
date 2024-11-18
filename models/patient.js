@@ -1,11 +1,20 @@
 const mongoose = require("mongoose");
-const bcrypt = require("bcrypt");
 
 const patientSchema = new mongoose.Schema(
   {
     name: {
       type: String,
       required: [true, "Please add name"],
+      trim: true,
+    },
+    dob: {
+      type: String,
+      required: [true, "Please add DOB"],
+      trim: true,
+    },
+    gender: {
+      type: String,
+      required: [true, "Please add gender"],
       trim: true,
     },
     email: {
@@ -20,6 +29,11 @@ const patientSchema = new mongoose.Schema(
       trim: true,
       min: 6,
       max: 64,
+    },
+    doctor: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Doctor",
+      required: true,
     },
   },
   { timestamps: true }
