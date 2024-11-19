@@ -17,7 +17,7 @@ const patientSchema = new mongoose.Schema(
       required: [true, "Please add gender"],
       trim: true,
     },
-    email: {
+    mobile: {
       type: String,
       unique: true,
       required: [true, "Please add email"],
@@ -35,6 +35,24 @@ const patientSchema = new mongoose.Schema(
       ref: "Doctor",
       required: true,
     },
+    careTaker: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Caretaker",
+      required: true,
+    },
+    medicines: [
+      {
+        name: {
+          type: String,
+          required: [true, "Medicine name is required"],
+          trim: true,
+        },
+        image: {
+          type: String,
+          required: [true, "Medicine image is required"], // Base64 string
+        },
+      },
+    ],
   },
   { timestamps: true }
 );

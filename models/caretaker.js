@@ -21,6 +21,12 @@ const caretakerSchema = new mongoose.Schema(
       min: 6,
       max: 64,
     },
+    patients: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Patient",
+      },
+    ],
   },
   { timestamps: true }
 );
