@@ -1,9 +1,9 @@
 const JWT = require("jsonwebtoken");
 const patientModel = require("../models/patient");
 const medicineModel = require("../models/medicine");
+const gameModel = require("../models/games");
 const { comparePassword } = require("../utils/auth");
 var { expressjwt: jwt } = require("express-jwt");
-const medicine = require("../models/medicine");
 
 //middleware
 const requireSingIn = jwt({
@@ -184,6 +184,65 @@ module.exports.getMedicine = async (req, res) => {
     res.status(500).send({
       success: false,
       message: "Error retrieving medicines",
+      error: error.message,
+    });
+  }
+};
+
+module.exports.addGame = async (req, res) => {
+  try {
+    const { patientId, gameId } = req.body;
+
+    // Validate input
+    if (!patientId || !gameId) {
+      return res.status(400).send({
+        success: false,
+        message: "Patient ID and Game ID are required.",
+      });
+    }
+
+    // Find the patient
+    const patient = await patientModel.findById(patientId);
+    if (!patient) {
+      return res.status(404).send({
+        success: false,
+        message: "Patient not found.",
+      });
+    }
+
+    // Find the game
+    const game = await gameModel.findById(gameId);
+    if (!game) {
+      return res.status(404).send({
+        success: false,
+        message: "Game not found.",
+      });
+    }
+
+    // Check if the game is already added
+    if (patient.games.includes(gameId)) {
+      return res.status(200).send({
+        success: true,
+        message: "Game is already added for this patient.",
+      });
+    }
+
+    // Add the game to the patient's games array
+    patient.games.push(gameId);
+
+    // Save the updated patient
+    await patient.save();
+
+    return res.status(200).send({
+      success: true,
+      message: "Game added successfully.",
+      patient,
+    });
+  } catch (error) {
+    console.error("Error adding game:", error);
+    res.status(500).send({
+      success: false,
+      message: "Error adding game to patient.",
       error: error.message,
     });
   }

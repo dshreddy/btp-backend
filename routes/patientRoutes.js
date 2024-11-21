@@ -8,6 +8,7 @@ const router = express.Router();
 router.post("/login", patientControllers.logIn);
 router.post("/addMedicine", patientControllers.addMedicine);
 router.post("/getMedicines", patientControllers.getMedicine);
+router.post("/addGame", patientControllers.addGame);
 router.post("/getGames", patientControllers.getGames);
 
 // export
