@@ -1,72 +1,15 @@
 const JWT = require("jsonwebtoken");
 const patientModel = require("../models/patient");
-const { hashPassword, comparePassword } = require("../utils/auth");
+const medicineModel = require("../models/medicine");
+const { comparePassword } = require("../utils/auth");
 var { expressjwt: jwt } = require("express-jwt");
+const medicine = require("../models/medicine");
 
 //middleware
 const requireSingIn = jwt({
   secret: process.env.JWT_SECRET,
   algorithms: ["HS256"],
 });
-
-module.exports.signUp = async (req, res) => {
-  try {
-    const { name, email, password } = req.body;
-
-    // validation
-    if (!name) {
-      return res.status(400).send({
-        success: false,
-        message: "Name is required",
-      });
-    }
-    if (!email) {
-      return res.status(400).send({
-        success: false,
-        message: "Email is required",
-      });
-    }
-    if (!password || password.length < 6 || password.length > 60) {
-      return res.status(400).send({
-        success: false,
-        message:
-          "Password is required and it's length should be in range [6, 60]",
-      });
-    }
-
-    // existing user
-    const patient = await patientModel.findOne({ email: email });
-    if (patient) {
-      return res.status(400).send({
-        success: false,
-        message: "User already registered with this email",
-      });
-    }
-
-    // hashed password
-    const hashedPassowrd = await hashPassword(password);
-
-    // save user
-    const newPatient = await patientModel({
-      name,
-      email,
-      password: hashedPassowrd,
-    }).save();
-
-    return res.status(200).send({
-      success: true,
-      message: "Registration successfull",
-    });
-  } catch (error) {
-    console.log(error);
-
-    return res.status(500).send({
-      success: false,
-      message: "Error in Patient SignUp API",
-      error: error,
-    });
-  }
-};
 
 module.exports.logIn = async (req, res) => {
   try {
@@ -125,6 +68,162 @@ module.exports.logIn = async (req, res) => {
       success: false,
       message: "Error in patient LogIn API",
       error: error,
+    });
+  }
+};
+
+module.exports.addMedicine = async (req, res) => {
+  try {
+    const {
+      patientID,
+      medicineId,
+      startDate,
+      endDate,
+      mealTime,
+      dosage,
+      dosageTimes,
+    } = req.body;
+
+    // Validate required fields
+    if (
+      !patientID ||
+      !medicineId ||
+      !startDate ||
+      !endDate ||
+      !mealTime ||
+      !dosage ||
+      !dosageTimes
+    ) {
+      return res.status(400).send({
+        success: false,
+        message: "All fields are required.",
+      });
+    }
+
+    // Find the patient
+    const patient = await patientModel.findById(patientID);
+    if (!patient) {
+      return res.status(404).send({
+        success: false,
+        message: "Patient not found.",
+      });
+    }
+
+    // Find the medicine
+    const medicine = await medicineModel.findById(medicineId);
+    if (!medicine) {
+      return res.status(404).send({
+        success: false,
+        message: "Medicine not found.",
+      });
+    }
+
+    // Add the medicine reference with additional details to the patient
+    const newMedicineRecord = {
+      medicine: medicine._id,
+      startDate,
+      endDate,
+      mealTime,
+      dosage,
+      dosageTimes,
+    };
+
+    patient.medicines.push(newMedicineRecord);
+
+    // Save the updated patient
+    await patient.save();
+
+    return res.status(200).send({
+      success: true,
+      message: "Medicine added successfully.",
+      patient,
+    });
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).send({
+      success: false,
+      message: "Error adding medicine to patient.",
+      error: error.message,
+    });
+  }
+};
+
+module.exports.getMedicine = async (req, res) => {
+  try {
+    const { patientId } = req.body;
+
+    // Validate input
+    if (!patientId) {
+      return res.status(400).send({
+        success: false,
+        message: "Patient ID is required",
+      });
+    }
+
+    // Find the patient and populate the medicines array
+    const existingPatient = await patientModel.findById(patientId).populate({
+      path: "medicines.medicine", // Nested populate to get medicine details
+      model: "Medicine",
+    });
+
+    if (!existingPatient) {
+      return res.status(404).send({
+        success: false,
+        message: "Patient not found",
+      });
+    }
+
+    // Return the list of medicines
+    res.status(200).send({
+      success: true,
+      message: "Medicines retrieved successfully",
+      medicines: existingPatient.medicines,
+    });
+  } catch (error) {
+    res.status(500).send({
+      success: false,
+      message: "Error retrieving medicines",
+      error: error.message,
+    });
+  }
+};
+
+module.exports.getGames = async (req, res) => {
+  try {
+    const { patientId } = req.body;
+
+    // Validate input
+    if (!patientId) {
+      return res.status(400).send({
+        success: false,
+        message: "Patient ID is required",
+      });
+    }
+
+    // Find the patient and populate the medicines array
+    const existingPatient = await patientModel
+      .findById(patientId)
+      .populate("games");
+
+    if (!existingPatient) {
+      return res.status(404).send({
+        success: false,
+        message: "Patient not found",
+      });
+    }
+
+    // Return the list of medicines
+    res.status(200).send({
+      success: true,
+      message: "Games retrieved successfully",
+      games: existingPatient.games,
+    });
+  } catch (error) {
+    res.status(500).send({
+      success: false,
+      message: "Error retrieving games",
+      error: error.message,
     });
   }
 };

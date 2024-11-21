@@ -2,6 +2,7 @@ const JWT = require("jsonwebtoken");
 const doctorModel = require("../models/doctor");
 const careTakerModel = require("../models/caretaker");
 const patientModel = require("../models/patient");
+const medicineModel = require("../models/medicine");
 const { hashPassword, comparePassword } = require("../utils/auth");
 var { expressjwt: jwt } = require("express-jwt");
 
@@ -189,9 +190,6 @@ module.exports.update = async (req, res) => {
   }
 };
 
-const fs = require("fs");
-const path = require("path");
-
 module.exports.addMedicine = async (req, res) => {
   try {
     const { doctor, medicineName, image } = req.body;
@@ -229,17 +227,23 @@ module.exports.addMedicine = async (req, res) => {
       });
     }
 
-    // Add medicine to doctor's medicines array
-    const newMedicine = { name: medicineName, image };
-    existingDoctor.medicines.push(newMedicine);
+    // Check if the medicines array exists and initialize it if not
+    if (!existingDoctor.medicines) {
+      existingDoctor.medicines = [];
+    }
 
-    // Save updated doctor record
+    // Create and save a new medicine
+    const newMedicine = new medicineModel({ name: medicineName, image });
+    await newMedicine.save();
+
+    // Push the new medicine into the doctor's medicines array
+    existingDoctor.medicines.push(newMedicine._id);
     await existingDoctor.save();
 
     return res.status(200).send({
       success: true,
       message: "Medicine added successfully",
-      user: doctor,
+      doctor: existingDoctor,
     });
   } catch (error) {
     console.error(error);
@@ -346,6 +350,7 @@ module.exports.getPatients = async (req, res) => {
     const existingDoctor = await doctorModel
       .findById(doctorId)
       .populate("patients");
+
     if (!existingDoctor) {
       return res.status(404).send({
         success: false,
@@ -358,6 +363,46 @@ module.exports.getPatients = async (req, res) => {
       success: true,
       message: "Patients retrieved successfully",
       patients: existingDoctor.patients,
+    });
+  } catch (error) {
+    console.error("Error fetching patients:", error);
+    res.status(500).send({
+      success: false,
+      message: "Error retrieving patients",
+      error: error.message,
+    });
+  }
+};
+
+module.exports.getMedicines = async (req, res) => {
+  try {
+    const { doctorId } = req.body;
+
+    // Validate input
+    if (!doctorId) {
+      return res.status(400).send({
+        success: false,
+        message: "Doctor ID is required",
+      });
+    }
+
+    // Find the doctor and populate the patients array
+    const existingDoctor = await doctorModel
+      .findById(doctorId)
+      .populate("medicines");
+
+    if (!existingDoctor) {
+      return res.status(404).send({
+        success: false,
+        message: "Doctor not found",
+      });
+    }
+
+    // Return the list of medicines
+    res.status(200).send({
+      success: true,
+      message: "Medicines retrieved successfully",
+      medicines: existingDoctor.medicines,
     });
   } catch (error) {
     console.error("Error fetching patients:", error);

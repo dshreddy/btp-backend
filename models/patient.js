@@ -42,15 +42,39 @@ const patientSchema = new mongoose.Schema(
     },
     medicines: [
       {
-        name: {
-          type: String,
-          required: [true, "Medicine name is required"],
-          trim: true,
+        medicine: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Medicine",
+          required: true,
         },
-        image: {
-          type: String,
-          required: [true, "Medicine image is required"], // Base64 string
+        startDate: {
+          type: Date,
+          required: true,
         },
+        endDate: {
+          type: Date,
+          required: true,
+        },
+        mealTime: {
+          type: String,
+          enum: ["before", "after"],
+          required: true,
+        },
+        dosage: {
+          type: Number,
+          required: true,
+        },
+        dosageTimes: {
+          type: [String], // Array of strings for dosage times (e.g., ["08:00", "14:00", "20:00"])
+          required: true,
+        },
+      },
+    ],
+    games: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Game",
+        default: [],
       },
     ],
   },

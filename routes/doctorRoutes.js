@@ -11,6 +11,7 @@ router.put("/update", doctorControllers.update);
 router.put("/addMedicine", doctorControllers.addMedicine);
 router.put("/addPatient", doctorControllers.addPatient);
 router.post("/getPatients", doctorControllers.getPatients);
+router.post("/getMedicines", doctorControllers.getMedicines);
 
 // export
 module.exports = router;
