@@ -13,6 +13,7 @@ const requireSingIn = jwt({
 
 module.exports.logIn = async (req, res) => {
   try {
+    // front-end sends 1st field with email name
     const { email, password } = req.body;
 
     // validation
@@ -30,7 +31,7 @@ module.exports.logIn = async (req, res) => {
     }
 
     // existing user
-    const patient = await patientModel.findOne({ email: email });
+    const patient = await patientModel.findOne({ mobile: email });
     if (patient) {
       const isSamePassword = await comparePassword(password, patient.password);
       if (isSamePassword) {
@@ -58,7 +59,7 @@ module.exports.logIn = async (req, res) => {
     } else {
       return res.status(400).send({
         success: false,
-        message: "No registered patient found with given email",
+        message: "No registered patient found with given mobile number",
       });
     }
   } catch (error) {
@@ -282,6 +283,111 @@ module.exports.getGames = async (req, res) => {
     res.status(500).send({
       success: false,
       message: "Error retrieving games",
+      error: error.message,
+    });
+  }
+};
+
+module.exports.updateGameActivity = async (req, res) => {
+  try {
+    const { patientId, gameId, score } = req.body;
+
+    // Validate input
+    if (!patientId || !gameId || score === undefined) {
+      return res.status(400).send({
+        success: false,
+        message: "Patient ID, Game ID, and score are required.",
+      });
+    }
+
+    // Find the patient
+    const patient = await patientModel.findById(patientId);
+    if (!patient) {
+      return res.status(404).send({
+        success: false,
+        message: "Patient not found.",
+      });
+    }
+
+    // Get or initialize the activity for the game
+    const gameScores = patient.activity.get(gameId) || [];
+
+    // Add the new score and limit to the last 10 scores
+    gameScores.push(score);
+    if (gameScores.length > 10) {
+      gameScores.shift(); // Remove the oldest score
+    }
+
+    // Update the activity map
+    patient.activity.set(gameId, gameScores);
+
+    // Save the updated patient document
+    await patient.save();
+
+    res.status(200).send({
+      success: true,
+      message: "Game activity updated successfully.",
+      activity: patient.activity,
+    });
+  } catch (error) {
+    console.error("Error updating game activity:", error);
+    res.status(500).send({
+      success: false,
+      message: "Error updating game activity.",
+      error: error.message,
+    });
+  }
+};
+
+module.exports.getActivity = async (req, res) => {
+  try {
+    const { patientId } = req.body;
+
+    // Validate input
+    if (!patientId) {
+      return res.status(400).send({
+        success: false,
+        message: "Patient ID is required.",
+      });
+    }
+
+    // Find the patient
+    const patient = await patientModel.findById(patientId).populate({
+      path: "games",
+      select: "name logo", // Include name and logo of the games
+    });
+
+    if (!patient) {
+      return res.status(404).send({
+        success: false,
+        message: "Patient not found.",
+      });
+    }
+
+    // Retrieve the activity data
+    const activityData = [];
+    for (const [gameId, scores] of patient.activity.entries()) {
+      const game = patient.games.find((g) => g._id.toString() === gameId);
+      if (game) {
+        activityData.push({
+          gameId,
+          gameName: game.name,
+          gameLogo: game.logo,
+          scores,
+        });
+      }
+    }
+
+    res.status(200).send({
+      success: true,
+      message: "Activity data retrieved successfully.",
+      activity: activityData,
+    });
+  } catch (error) {
+    console.error("Error retrieving activity data:", error);
+    res.status(500).send({
+      success: false,
+      message: "Error retrieving activity data.",
       error: error.message,
     });
   }

@@ -77,6 +77,11 @@ const patientSchema = new mongoose.Schema(
         default: [],
       },
     ],
+    activity: {
+      type: Map,
+      of: [Number], // Each game ID maps to an array of scores
+      default: {},
+    },
   },
   { timestamps: true }
 );
