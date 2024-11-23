@@ -2,6 +2,7 @@ const JWT = require("jsonwebtoken");
 const patientModel = require("../models/patient");
 const { hashPassword, comparePassword } = require("../utils/auth");
 var { expressjwt: jwt } = require("express-jwt");
+const patient = require("../models/patient");
 
 //middleware
 const requireSingIn = jwt({
@@ -87,7 +88,7 @@ module.exports.logIn = async (req, res) => {
     }
 
     // existing user
-    const patient = await patientModel.findOne({ email: email });
+    const patient = await patientModel.findOne({ mobile: email });
     if (patient) {
       const isSamePassword = await comparePassword(password, patient.password);
       if (isSamePassword) {
@@ -125,6 +126,47 @@ module.exports.logIn = async (req, res) => {
       success: false,
       message: "Error in patient LogIn API",
       error: error,
+    });
+  }
+};
+
+module.exports.updateDeviceToken = async (req, res) => {
+  try {
+    const { patientId, deviceToken } = req.body;
+
+    // Validate the input
+    if (!patientId || !deviceToken) {
+      return res.status(400).send({
+        success: false,
+        message: "Patient ID and Device Token are required",
+      });
+    }
+
+    // Find the patient by ID
+    const patient = await patientModel.findById(patientId);
+
+    if (!patient) {
+      return res.status(404).send({
+        success: false,
+        message: "Patient not found",
+      });
+    }
+
+    // Update the patient's device token
+    patient.deviceToken = deviceToken;
+    await patient.save();
+
+    return res.status(200).send({
+      success: true,
+      message: "Device token updated successfully",
+      data: { patientId: patient._id, deviceToken: patient.deviceToken },
+    });
+  } catch (error) {
+    console.error("Error updating device token:", error);
+    return res.status(500).send({
+      success: false,
+      message: "An error occurred while updating the device token",
+      error: error.message,
     });
   }
 };

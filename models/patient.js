@@ -53,6 +53,11 @@ const patientSchema = new mongoose.Schema(
         },
       },
     ],
+    deviceToken: {
+      type: String,
+      required: false, // Optional, as it may not always be available
+      trim: true,
+    },
   },
   { timestamps: true }
 );
