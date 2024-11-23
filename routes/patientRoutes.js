@@ -5,9 +5,14 @@ const patientControllers = require("../controllers/patientControllers");
 const router = express.Router();
 
 // routes
-router.post("/signup", patientControllers.signUp);
 router.post("/login", patientControllers.logIn);
 router.post("/updateDeviceToken", patientControllers.updateDeviceToken);
+router.post("/addMedicine", patientControllers.addMedicine);
+router.post("/getMedicines", patientControllers.getMedicine);
+router.post("/addGame", patientControllers.addGame);
+router.post("/getGames", patientControllers.getGames);
+router.put("/updateGameActivity", patientControllers.updateGameActivity);
+router.post("/getActivity", patientControllers.getActivity);
 
 // export
 module.exports = router;

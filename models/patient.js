@@ -42,14 +42,31 @@ const patientSchema = new mongoose.Schema(
     },
     medicines: [
       {
-        name: {
-          type: String,
-          required: [true, "Medicine name is required"],
-          trim: true,
+        medicine: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Medicine",
+          required: true,
         },
-        image: {
+        startDate: {
+          type: Date,
+          required: true,
+        },
+        endDate: {
+          type: Date,
+          required: true,
+        },
+        mealTime: {
           type: String,
-          required: [true, "Medicine image is required"], // Base64 string
+          enum: ["before", "after"],
+          required: true,
+        },
+        dosage: {
+          type: Number,
+          required: true,
+        },
+        dosageTimes: {
+          type: [String], // Array of strings for dosage times (e.g., ["08:00", "14:00", "20:00"])
+          required: true,
         },
       },
     ],
@@ -57,6 +74,18 @@ const patientSchema = new mongoose.Schema(
       type: String,
       required: false, // Optional, as it may not always be available
       trim: true,
+    },
+    games: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Game",
+        default: [],
+      },
+    ],
+    activity: {
+      type: Map,
+      of: [Number], // Each game ID maps to an array of scores
+      default: {},
     },
   },
   { timestamps: true }

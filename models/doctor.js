@@ -28,15 +28,9 @@ const doctorSchema = new mongoose.Schema(
     ],
     medicines: [
       {
-        name: {
-          type: String,
-          required: [true, "Medicine name is required"],
-          trim: true,
-        },
-        image: {
-          type: String,
-          required: [true, "Medicine image is required"], // Base64 string
-        },
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Medicine",
+        default: [],
       },
     ],
   },
