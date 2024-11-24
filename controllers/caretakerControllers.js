@@ -3,9 +3,9 @@ const caretakerModel = require("../models/caretaker");
 const { hashPassword, comparePassword } = require("../utils/auth");
 var { expressjwt: jwt } = require("express-jwt");
 const patientModel = require("../models/patient");
-const fetch = require("node-fetch");
-const serviceAccount = require("../../btp-mentalhealthapp-firebase-adminsdk-3bhql-26bcb873e8.json");
+const { Expo } = require("expo-server-sdk");
 
+const expo = new Expo();
 //middleware
 const requireSingIn = jwt({
   secret: process.env.JWT_SECRET,
@@ -13,40 +13,28 @@ const requireSingIn = jwt({
 });
 
 const sendNotification = async (deviceToken, messageTitle, messageBody) => {
-  const url = `https://fcm.googleapis.com/v1/projects/${serviceAccount.project_id}/messages:send`;
+  try {
+    console.log("Sending notification to:", deviceToken);
 
-  const body = {
-    message: {
-      token: deviceToken,
-      notification: {
+    // Construct the message
+    const messages = [
+      {
+        to: deviceToken,
         title: messageTitle,
         body: messageBody,
+        sound: "default", // Optional: Include sound for notification
       },
-    },
-  };
+    ];
 
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${await getAccessToken()}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
-  });
+    // Send the notification
+    const receipts = await expo.sendPushNotificationsAsync(messages);
+    console.log("Notification receipts:", receipts);
 
-  const data = await response.json();
-  console.log("Notification Response:", data);
-};
-
-const getAccessToken = async () => {
-  const { google } = require("google-auth-library");
-  const client = new google.auth.JWT({
-    email: serviceAccount.client_email,
-    key: serviceAccount.private_key,
-    scopes: ["https://www.googleapis.com/auth/firebase.messaging"],
-  });
-  const tokens = await client.authorize();
-  return tokens.access_token;
+    return receipts;
+  } catch (error) {
+    console.error("Error sending notification:", error);
+    throw error; // Re-throw the error to handle it in the caller function
+  }
 };
 
 module.exports.signUp = async (req, res) => {
@@ -245,7 +233,13 @@ module.exports.getPatients = async (req, res) => {
     // Find the caretaker and populate the patients array
     const existingCaretaker = await caretakerModel
       .findById(caretakerId)
-      .populate("patients");
+      .populate({
+        path: "patients",
+        populate: {
+          path: "medicines.medicine", // Populate the medicines' `medicine` field
+          select: "name", // Only fetch the name field of the medicine
+        },
+      });
     if (!existingCaretaker) {
       return res.status(404).send({
         success: false,

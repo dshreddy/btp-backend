@@ -99,6 +99,7 @@ module.exports.updateDeviceToken = async (req, res) => {
     patient.deviceToken = deviceToken;
     await patient.save();
 
+    console.log(deviceToken);
     return res.status(200).send({
       success: true,
       message: "Device token updated successfully",
