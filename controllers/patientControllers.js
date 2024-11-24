@@ -4,6 +4,7 @@ const medicineModel = require("../models/medicine");
 const gameModel = require("../models/games");
 const { comparePassword } = require("../utils/auth");
 var { expressjwt: jwt } = require("express-jwt");
+const patient = require("../models/patient");
 
 //middleware
 const requireSingIn = jwt({
@@ -73,79 +74,42 @@ module.exports.logIn = async (req, res) => {
   }
 };
 
-module.exports.addMedicine = async (req, res) => {
+module.exports.updateDeviceToken = async (req, res) => {
   try {
-    const {
-      patientID,
-      medicineId,
-      startDate,
-      endDate,
-      mealTime,
-      dosage,
-      dosageTimes,
-    } = req.body;
+    const { patientId, deviceToken } = req.body;
 
-    // Validate required fields
-    if (
-      !patientID ||
-      !medicineId ||
-      !startDate ||
-      !endDate ||
-      !mealTime ||
-      !dosage ||
-      !dosageTimes
-    ) {
+    // Validate the input
+    if (!patientId || !deviceToken) {
       return res.status(400).send({
         success: false,
-        message: "All fields are required.",
+        message: "Patient ID and Device Token are required",
       });
     }
 
-    // Find the patient
-    const patient = await patientModel.findById(patientID);
+    // Find the patient by ID
+    const patient = await patientModel.findById(patientId);
+
     if (!patient) {
       return res.status(404).send({
         success: false,
-        message: "Patient not found.",
+        message: "Patient ID is required",
       });
     }
 
-    // Find the medicine
-    const medicine = await medicineModel.findById(medicineId);
-    if (!medicine) {
-      return res.status(404).send({
-        success: false,
-        message: "Medicine not found.",
-      });
-    }
-
-    // Add the medicine reference with additional details to the patient
-    const newMedicineRecord = {
-      medicine: medicine._id,
-      startDate,
-      endDate,
-      mealTime,
-      dosage,
-      dosageTimes,
-    };
-
-    patient.medicines.push(newMedicineRecord);
-
-    // Save the updated patient
+    patient.deviceToken = deviceToken;
     await patient.save();
 
+    console.log(deviceToken);
     return res.status(200).send({
       success: true,
-      message: "Medicine added successfully.",
-      patient,
+      message: "Device token updated successfully",
+      data: { patientId: patient._id, deviceToken: patient.deviceToken },
     });
   } catch (error) {
-    console.error(error);
-
+    console.error("Error updating device token:", error);
     return res.status(500).send({
       success: false,
-      message: "Error adding medicine to patient.",
-      error: error.message,
+      message: "An error occurred while updating the device token",
     });
   }
 };
@@ -174,7 +138,6 @@ module.exports.getMedicine = async (req, res) => {
         message: "Patient not found",
       });
     }
-
     // Return the list of medicines
     res.status(200).send({
       success: true,
@@ -388,6 +351,83 @@ module.exports.getActivity = async (req, res) => {
     res.status(500).send({
       success: false,
       message: "Error retrieving activity data.",
+      error: error.message,
+    });
+  }
+};
+
+module.exports.addMedicine = async (req, res) => {
+  try {
+    const {
+      patientID,
+      medicineId,
+      startDate,
+      endDate,
+      mealTime,
+      dosage,
+      dosageTimes,
+    } = req.body;
+
+    // Validate required fields
+    if (
+      !patientID ||
+      !medicineId ||
+      !startDate ||
+      !endDate ||
+      !mealTime ||
+      !dosage ||
+      !dosageTimes
+    ) {
+      return res.status(400).send({
+        success: false,
+        message: "All fields are required.",
+      });
+    }
+
+    // Find the patient
+    const patient = await patientModel.findById(patientID);
+    if (!patient) {
+      return res.status(404).send({
+        success: false,
+        message: "Patient not found.",
+      });
+    }
+
+    // Find the medicine
+    const medicine = await medicineModel.findById(medicineId);
+    if (!medicine) {
+      return res.status(404).send({
+        success: false,
+        message: "Medicine not found.",
+      });
+    }
+
+    // Add the medicine reference with additional details to the patient
+    const newMedicineRecord = {
+      medicine: medicine._id,
+      startDate,
+      endDate,
+      mealTime,
+      dosage,
+      dosageTimes,
+    };
+
+    patient.medicines.push(newMedicineRecord);
+
+    // Save the updated patient
+    await patient.save();
+
+    return res.status(200).send({
+      success: true,
+      message: "Medicine added successfully.",
+      patient,
+    });
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).send({
+      success: false,
+      message: "Error adding medicine to patient.",
       error: error.message,
     });
   }
