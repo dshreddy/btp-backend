@@ -6,6 +6,7 @@ const router = express.Router();
 
 // routes
 router.post("/login", patientControllers.logIn);
+router.post("/updateDeviceToken", patientControllers.updateDeviceToken);
 router.post("/addMedicine", patientControllers.addMedicine);
 router.post("/getMedicines", patientControllers.getMedicine);
 router.post("/addGame", patientControllers.addGame);
