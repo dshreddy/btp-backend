@@ -334,6 +334,56 @@ module.exports.addPatient = async (req, res) => {
   }
 };
 
+module.exports.deletePatient = async (req, res) => {
+  try {
+    const { doctorId, patientId } = req.body;
+
+    // Validate input
+    if (!doctorId || !patientId) {
+      return res.status(400).send({
+        success: false,
+        message: "Doctor ID & Patient ID are required",
+      });
+    }
+
+    // Find the doctor
+    const doctor = await doctorModel.findById(doctorId);
+
+    if (!doctor) {
+      return res.status(404).send({
+        success: false,
+        message: "Doctor not found",
+      });
+    }
+
+    // Remove the patient from the doctor's patients array
+    const updatedPatients = doctor.patients.filter(
+      (patient) => patient.toString() !== patientId
+    );
+
+    // Update the doctor's patients list
+    doctor.patients = updatedPatients;
+
+    // Save the updated doctor document
+    await doctor.save();
+
+    // Optionally, delete the patient record itself from the database
+    await patientModel.findByIdAndDelete(patientId);
+
+    return res.status(200).send({
+      success: true,
+      message: "Patient removed successfully from doctor's list and deleted.",
+    });
+  } catch (error) {
+    console.error("Error deleting patient:", error);
+    res.status(500).send({
+      success: false,
+      message: "Error deleting patient",
+      error: error.message,
+    });
+  }
+};
+
 module.exports.getPatients = async (req, res) => {
   try {
     const { doctorId } = req.body;

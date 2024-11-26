@@ -211,6 +211,56 @@ module.exports.addGame = async (req, res) => {
   }
 };
 
+module.exports.deleteGame = async (req, res) => {
+  try {
+    const { patientId, gameId } = req.body;
+
+    // Validate inputs
+    if (!patientId || !gameId) {
+      return res.status(400).send({
+        success: false,
+        message: "Patient ID and Game ID are required.",
+      });
+    }
+
+    // Find the patient
+    const patient = await patientModel.findById(patientId);
+    if (!patient) {
+      return res.status(404).send({
+        success: false,
+        message: "Patient not found.",
+      });
+    }
+
+    // Check if the game exists in the patient's games array
+    const gameIndex = patient.games.indexOf(gameId);
+    if (gameIndex === -1) {
+      return res.status(404).send({
+        success: false,
+        message: "Game not found in patient's games list.",
+      });
+    }
+
+    // Remove the game from the patient's games array
+    patient.games.splice(gameIndex, 1);
+
+    // Save the updated patient document
+    await patient.save();
+
+    return res.status(200).send({
+      success: true,
+      message: "Game removed successfully from patient's games list.",
+    });
+  } catch (error) {
+    console.error("Error deleting game:", error);
+    res.status(500).send({
+      success: false,
+      message: "Error deleting game.",
+      error: error.message,
+    });
+  }
+};
+
 module.exports.getGames = async (req, res) => {
   try {
     const { patientId } = req.body;
@@ -427,6 +477,59 @@ module.exports.addMedicine = async (req, res) => {
     return res.status(500).send({
       success: false,
       message: "Error adding medicine to patient.",
+      error: error.message,
+    });
+  }
+};
+
+module.exports.deleteMedicine = async (req, res) => {
+  try {
+    const { patientId, medicineId } = req.body;
+
+    // Validate inputs
+    if (!patientId || !medicineId) {
+      return res.status(400).send({
+        success: false,
+        message: "Patient ID and Medicine ID are required.",
+      });
+    }
+
+    // Find the patient
+    const patient = await patientModel.findById(patientId);
+    if (!patient) {
+      return res.status(404).send({
+        success: false,
+        message: "Patient not found.",
+      });
+    }
+
+    // Check if the medicine exists in the patient's medicines array
+    const medicineIndex = patient.medicines.findIndex((medicine) => {
+      return medicine.medicine.toString() === medicineId.toString();
+    });
+
+    if (medicineIndex === -1) {
+      return res.status(404).send({
+        success: false,
+        message: "Medicine not found in patient's medicines list.",
+      });
+    }
+
+    // Remove the medicine from the patient's medicines array
+    patient.medicines.splice(medicineIndex, 1);
+
+    // Save the updated patient document
+    await patient.save();
+
+    return res.status(200).send({
+      success: true,
+      message: "Medicine removed successfully from patient's medicines list.",
+    });
+  } catch (error) {
+    console.error("Error deleting medicine:", error);
+    res.status(500).send({
+      success: false,
+      message: "Error deleting medicine.",
       error: error.message,
     });
   }
