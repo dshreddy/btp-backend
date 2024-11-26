@@ -5,6 +5,7 @@ const colors = require("colors");
 const morgan = require("morgan");
 const bodyParser = require("body-parser");
 const connectDB = require("./config/db");
+require("./utils/medicineReminderCron");
 
 // DOTENV
 dotenv.config();
