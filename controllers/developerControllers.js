@@ -93,6 +93,83 @@ module.exports.addGame = async (req, res) => {
   }
 };
 
+module.exports.updateGame = async (req, res) => {
+  try {
+    const { id, name, logo, html } = req.body;
+
+    // Validate input
+    if (!id || !name || !logo || !html) {
+      return res.status(400).send({
+        success: false,
+        message: "All fields (id, name, logo, html) are required.",
+      });
+    }
+
+    // Find the game by ID and update it
+    const game = await gameModel.findByIdAndUpdate(
+      id,
+      { name, logo, html },
+      { new: true } // Return the updated document
+    );
+
+    if (!game) {
+      return res.status(404).send({
+        success: false,
+        message: "Game not found.",
+      });
+    }
+
+    return res.status(200).send({
+      success: true,
+      message: "Game updated successfully.",
+      game,
+    });
+  } catch (error) {
+    console.error("Error updating game:", error);
+    return res.status(500).send({
+      success: false,
+      message: "Error updating game.",
+      error: error.message,
+    });
+  }
+};
+
+module.exports.deleteGame = async (req, res) => {
+  try {
+    const { id } = req.body;
+
+    // Validate input
+    if (!id) {
+      return res.status(400).send({
+        success: false,
+        message: "ID is required.",
+      });
+    }
+
+    // Find the game by ID and delete it
+    const game = await gameModel.findByIdAndDelete(id);
+
+    if (!game) {
+      return res.status(404).send({
+        success: false,
+        message: "Game not found.",
+      });
+    }
+
+    return res.status(200).send({
+      success: true,
+      message: "Game deleted successfully.",
+    });
+  } catch (error) {
+    console.error("Error deleting game:", error);
+    return res.status(500).send({
+      success: false,
+      message: "Error deleting game.",
+      error: error.message,
+    });
+  }
+};
+
 module.exports.getAllGames = async (req, res) => {
   try {
     // Fetch all games
