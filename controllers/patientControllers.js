@@ -4,7 +4,6 @@ const medicineModel = require("../models/medicine");
 const gameModel = require("../models/games");
 const { comparePassword } = require("../utils/auth");
 var { expressjwt: jwt } = require("express-jwt");
-const patient = require("../models/patient");
 
 //middleware
 const requireSingIn = jwt({
