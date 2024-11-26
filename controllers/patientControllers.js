@@ -432,3 +432,41 @@ module.exports.addMedicine = async (req, res) => {
     });
   }
 };
+
+module.exports.removeDeviceToken = async (req, res) => {
+  try {
+    const { patientId } = req.body;
+
+    // Validate input
+    if (!patientId) {
+      return res.status(400).send({
+        success: false,
+        message: "Patient ID is required.",
+      });
+    }
+    // Find the patient
+    const patient = await patientModel.findById(patientId);
+
+    if (!patient) {
+      return res.status(404).send({
+        success: false,
+        message: "Patient not found.",
+      });
+    }
+
+    patient.deviceToken = undefined; // Remove the device token
+    await patient.save(); // Save the updated patient
+
+    res.status(200).send({
+      success: true,
+      message: "Device token removed successfully.",
+    });
+  } catch (error) {
+    console.error("[removeDeviceToken] Error removing device token:", error);
+    res.status(500).send({
+      success: false,
+      message: "Error removing device token data.",
+      error: error.message,
+    });
+  }
+};
